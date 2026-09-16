@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /generar-qr
-
-Sitemap: https://digitalasistent.com/sitemap.xml

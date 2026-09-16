@@ -1,0 +1,31 @@
+{
+  "name": "crm-tarifario-essalud",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CRM para liquidación de costos según tarifario Essalud Nivel I (terceros no asegurados)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "node tests/crm-costos.test.mjs",
+    "check": "npm run test && npm run lint && npm run build",
+    "importar-tarifario": "node scripts/importar-tarifario.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "eslint": "^10.9.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "vite": "^8.2.2"
+  }
+}

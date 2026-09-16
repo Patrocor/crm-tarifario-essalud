@@ -1,0 +1,875 @@
+/* Estilos de las páginas de contenido (guías de trámites).
+   Páginas HTML estáticas, servidas sin pasar por React: el contenido tiene que
+   ser legible para adultos mayores y visible para un buscador sin ejecutar JS.
+   Paleta y escala vienen de DESIGN.md — misma identidad que la app. */
+
+:root {
+  color-scheme: light;
+
+  /* ── Color ──────────────────────────────────────────────────────── */
+  /* Cartón manila, igual que la portada. Era crema #FAF6EE: al tocar "Ver la
+     guía" se cambiaba de fondo, de escala de títulos y de radio de esquina en
+     un solo clic, y la guía parecía otro sitio. La portada es el fólder; la
+     guía es una hoja adentro del mismo fólder. */
+  --bg: #FFFFFF;
+  --superficie: #F6F9FC;   /* la hoja */
+  --borde: #E3E8EE;        /* filete de papel */
+  --regla: #A8C3DE;        /* filete fuerte */
+  /* Tres tintas, las mismas que la portada (DESIGN.md), un punto más oscuras
+     que la versión crema porque el fondo ahora es manila. */
+  --tinta: #0D253D;        /* títulos, énfasis */
+  --tinta-cuerpo: #33475B; /* párrafos */
+  --tinta-suave: #5B6B7D;  /* ayudas, pies, rótulos */
+  /* `--tinta-suave` (5.46:1 acá) migró de un valor que pasaba 7:1. Como
+     TEXTO (no como fondo/borde) cae debajo del piso del proyecto — revisión
+     de contraste del 2026-09-02, mismo criterio que `--tema-texto` arriba.
+     `--mute-deep` (7.7:1 acá) es la variante para eso. */
+  --mute-deep: #425567;
+  --granate: #5B4FE9;
+  --granate-hondo: #4434D4;
+  --carton: #0D253D;       /* cartón prensado: pie y barras de norma */
+
+  /* Sombras suaves, sin la textura de papel de antes: la superficie ya no
+     simula una hoja física, es una tarjeta plana con elevación sutil. */
+  --sh-1: 0 1px 3px rgba(13,37,61,.08);
+  --sh-2: 0 8px 24px rgba(13,37,61,.08), 0 2px 6px rgba(13,37,61,.04);
+
+  --mono: ui-monospace, "SF Mono", "SFMono-Regular", "Roboto Mono", "DejaVu Sans Mono", monospace;
+
+  /* Color del trámite. Cada página lo redefine en <body data-tramite>. */
+  --tema: #5B4FE9;
+  --tema-suave: #EDEBFE;
+  /* `--tema` (5.62:1 acá, la ancla por defecto) sirve para fondo/ícono/badge.
+     Como texto (h1/h2/summary/nota-titulo/botón invertido) caía debajo del
+     piso de 7:1 que el proyecto ya tenía — revisión de contraste del
+     2026-09-02, mismo criterio que `colorTexto` en src/flujos.js y
+     CITT_COLOR_DARK/ONLINE_COLOR_DEEP en src/App.jsx. `--tema-texto`
+     (7.81:1 acá) es la variante para eso; cada `body[data-tramite]` de abajo
+     la redeclara con su propio valor — los que ya pasaban 7:1 (historia,
+     online) la re-declaran igual a su `--tema`, así no heredan el violeta
+     por defecto. */
+  --tema-texto: #4434D4;
+
+  /* --alerta solo se usa como texto (.aviso-titulo) — nunca como fondo, así
+     que directamente pasa a ser la variante oscura (8.63:1, antes 5.91:1),
+     mismo caso que CITT_COLOR_DARK en src/App.jsx. */
+  --alerta: #6B430E;
+  --alerta-suave: #FBF0DE;
+  --aviso-bg: #F3F1FE;
+  --aviso-borde: #D8D3F5;
+
+  /* ── Tipografía ─────────────────────────────────────────────────── */
+  /* Base 16px. 16px de cuerpo y 14px en textos chicos son el piso que fija
+     PRODUCT.md: por debajo deja de ser legible para este público. */
+  --txt: 1rem;
+  --txt-chico: 0.875rem;
+  --txt-h3: 1.0625rem;
+  --txt-h2: 1.375rem;
+  /* Escala de display de la portada, un escalón más abajo: la guía es una hoja
+     dentro del fólder, no la tapa. A 24px fijos el título de la guía era más
+     chico que el h2 de la portada y el salto se sentía como otro sitio. */
+  --txt-h1: clamp(28px, 4.4vw, 36px);
+
+  /* Tres pesos, no cinco. Antes convivían 400/500/600/700/900 en el mismo
+     tamaño, que es ruido, no jerarquía. */
+  --peso-cuerpo: 400;
+  --peso-medio: 600;
+  --peso-fuerte: 700;
+  --peso-titulo: 800;
+
+  /* ── Espaciado ──────────────────────────────────────────────────── */
+  /* Escala de 4. Antes había 16 valores sueltos (2, 6, 7, 11, 13, 18, 22, 26…)
+     y el ritmo de la página dependía de qué número había salido ese día. */
+  --e0: 2px; /* medio paso, solo para ajustes ópticos entre rótulo y valor */
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 20px;
+  --e6: 24px;
+  --e7: 32px;
+  --e8: 48px;
+
+  /* ── Formas y movimiento ────────────────────────────────────────── */
+  --radio: 10px;
+  --radio-chico: 8px;
+  --radio-completo: 999px;
+  --salida: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 180ms;
+
+  /* Área mínima de toque. PRODUCT.md la fija en 44px por el público:
+     adultos mayores con motricidad reducida. --pad-toque es el relleno que
+     lleva un enlace en línea de ~17px de alto hasta esos 44px; no es una
+     medida de espaciado, es una medida derivada de --toque. */
+  --toque: 44px;
+  --pad-toque: 14px;
+
+  --ancho: 40rem;        /* columna de lectura: ~70ch a 16px */
+  --ancho-indice: 15rem; /* índice lateral, solo en pantallas anchas */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  /* Inter, igual que la app. Con system-ui las guías salían en SF o en Roboto
+     y se notaba el salto al venir de la landing. La fuente la cargan las
+     páginas en su <head>; si no llega, el respaldo sigue siendo el sistema. */
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--tinta-cuerpo);
+  font-size: var(--txt);
+  font-weight: var(--peso-cuerpo);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Temas por trámite (DESIGN.md). `--tema-texto` es la variante de texto
+   (≥7:1) de cada uno — ver la nota junto a `--tema-texto` arriba. Descanso
+   Médico (canje) compartía el hex de la ancla antes de la migración del
+   2026-09-02 (los dos eran #8B1E3F); esta guía es la primera vez que tiene
+   su propio color, separado de la ancla. */
+body[data-tramite="canje"]    { --tema: #C81E4E; --tema-suave: #FDE7ED; --tema-texto: #901638; }
+body[data-tramite="informe"]  { --tema: #1F6B5C; --tema-suave: #E3F3EF; --tema-texto: #164F42; }
+body[data-tramite="historia"] { --tema: #4A3F7A; --tema-suave: #ECEAFB; --tema-texto: #4A3F7A; }
+body[data-tramite="online"]   { --tema: #2D5D80; --tema-suave: #E1EFF7; --tema-texto: #2D5D80; }
+
+/* ── Foco: un solo tratamiento para todo lo que se puede enfocar ──── */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--tema);
+  outline-offset: 2px;
+  border-radius: var(--e1);
+}
+
+/* ── Saltar al contenido ─────────────────────────────────────────── */
+.saltar {
+  position: absolute; left: -9999px;
+  background: var(--granate); color: #fff;
+  padding: var(--e3) var(--e4);
+  border-radius: 0 0 var(--radio) 0;
+  font-weight: var(--peso-fuerte); text-decoration: none; z-index: 10;
+}
+.saltar:focus { left: 0; top: 0; }
+
+/* ── Cabecera ────────────────────────────────────────────────────── */
+/* Misma barra que la landing: crema con una hairline abajo, marca a la
+   izquierda en granate. Antes era una franja granate llena, así que al tocar
+   una guía desde el inicio la cabecera cambiaba de color de golpe. */
+.cabecera {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(239, 230, 213, 0.94);
+  backdrop-filter: blur(10px);
+  /* El filete granate de arriba es el lomo del fólder: la misma barra que la
+     portada, para que la cabecera no cambie al pasar de una a la otra. */
+  border-top: 4px solid var(--granate);
+  border-bottom: 1px solid var(--regla);
+  padding: var(--e3) var(--e5);
+}
+.cabecera-int {
+  max-width: var(--ancho); margin: 0 auto;
+  display: flex; align-items: center; gap: var(--e3);
+  min-height: var(--toque);
+}
+.marca {
+  color: var(--granate-hondo); font-weight: var(--peso-titulo); font-size: 1.125rem;
+  text-decoration: none; letter-spacing: -0.02em;
+  /* El padding agranda el área de toque sin mover la maqueta: en un
+     elemento en línea no cambia la altura de la línea. */
+  padding: var(--e2) var(--e1); margin: calc(var(--e2) * -1) calc(var(--e1) * -1);
+}
+.marca:hover { text-decoration: underline; }
+.escudo {
+  background: var(--granate); color: #fff;
+  /* La marca sí conserva su radio: es el logotipo, no una hoja de papel. */
+  width: 36px; height: 36px; border-radius: 10px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: var(--peso-titulo); font-size: var(--txt-chico); letter-spacing: -0.02em;
+}
+/* Enlace a las guías en la cabecera: navegar sin volver al pie. */
+.cabecera-nav {
+  margin-left: auto;
+  color: var(--tinta-cuerpo); text-decoration: none;
+  font-size: 0.9375rem; font-weight: 500;
+  padding: var(--e3) var(--e2);
+  min-height: var(--toque);
+  display: inline-flex; align-items: center;
+  border-radius: var(--radio-chico);
+  transition: color var(--dur) var(--salida);
+}
+.cabecera-nav:hover { color: var(--granate-hondo); }
+
+/* ── Cuerpo ──────────────────────────────────────────────────────── */
+/* Una sola columna de lectura hasta que hay sitio de sobra. Recién ahí
+   aparece el índice al costado: en pantallas medianas quitarle ancho al
+   texto para meter una barra lateral empeora la lectura. */
+main {
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: var(--e6) var(--e5) var(--e8);
+}
+
+/* Dos columnas reales: índice y cuerpo. El envoltorio .cuerpo-pagina lo crea
+   contenido.js junto con el índice, así que la clase .con-indice solo aparece
+   cuando ambos existen; sin JS, main sigue siendo una columna simple. */
+@media (min-width: 64rem) {
+  main.con-indice {
+    max-width: calc(var(--ancho) + var(--ancho-indice) + 3rem);
+    display: grid;
+    grid-template-columns: var(--ancho-indice) minmax(0, var(--ancho));
+    column-gap: 3rem;
+    align-items: start;
+  }
+}
+
+/* ── Presentación con Doña Rosa ──────────────────────────────────── */
+.intro {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e4);
+  margin-bottom: var(--e5);
+}
+.intro-retrato {
+  flex: 0 0 auto;
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  border: 3px solid var(--tema);
+  background: var(--tema-suave);
+}
+.intro .entradilla { margin-bottom: var(--e2); }
+.intro-pie {
+  font-size: var(--txt-chico); font-weight: var(--peso-medio);
+  color: var(--mute-deep); margin: 0;
+}
+
+@media (min-width: 34rem) {
+  .intro { gap: var(--e6); align-items: center; }
+  .intro-retrato { width: 104px; height: 104px; }
+}
+
+/* ── Índice lateral (solo pantallas anchas) ──────────────────────── */
+/* Lo arma contenido.js a partir de los <summary>. No va en el HTML: sería
+   duplicar en seis archivos una lista que ya existe en la página. */
+.indice-lateral { display: none; }
+
+@media (min-width: 64rem) {
+  .indice-lateral {
+    display: block;
+    position: sticky; top: var(--e6);
+    font-size: var(--txt-chico);
+  }
+  .indice-lateral h2 {
+    font-size: var(--txt-chico); font-weight: var(--peso-fuerte);
+    color: var(--mute-deep); margin: 0 0 var(--e2);
+  }
+  .indice-lateral ol { list-style: none; }
+  .indice-lateral a {
+    display: flex; align-items: center;
+    min-height: var(--toque);
+    padding: var(--e2) var(--e3);
+    border-radius: var(--radio-chico);
+    color: var(--tinta); font-weight: var(--peso-medio);
+    text-decoration: none; line-height: 1.4;
+    transition: background var(--dur) var(--salida), color var(--dur) var(--salida);
+  }
+  .indice-lateral a:hover { background: var(--superficie); color: var(--tema-texto, var(--tema)); }
+  .indice-lateral a[aria-current="true"] {
+    background: var(--tema-suave); color: var(--tema-texto, var(--tema)); font-weight: var(--peso-titulo);
+  }
+}
+
+/* ── Migas de pan ────────────────────────────────────────────────── */
+/* En monoespaciada y en versalitas: es el mismo rótulo de archivador que la
+   portada usa arriba de cada sección (.leyebrow). */
+.migas {
+  font-family: var(--mono);
+  font-size: var(--txt-chico); font-weight: var(--peso-medio);
+  letter-spacing: 0.06em;
+  color: var(--mute-deep); margin-bottom: var(--e4);
+}
+/* Mismo truco que en .marca: área de toque de 44px sin alterar la línea. */
+.migas a {
+  color: var(--granate-hondo);
+  padding: var(--pad-toque) var(--e1);
+  margin: calc(var(--pad-toque) * -1) calc(var(--e1) * -1);
+}
+
+/* ── Tipografía ──────────────────────────────────────────────────── */
+h1 {
+  font-size: var(--txt-h1); line-height: 1.08; font-weight: var(--peso-titulo);
+  color: var(--tema-texto, var(--tema)); letter-spacing: -0.035em;
+  text-wrap: balance; margin-bottom: var(--e3);
+}
+h2 {
+  font-size: var(--txt-h2); line-height: 1.2; font-weight: var(--peso-fuerte);
+  color: var(--tema-texto, var(--tema)); text-wrap: balance; letter-spacing: -0.025em;
+  margin: var(--e7) 0 var(--e2);
+}
+h3 {
+  font-size: var(--txt-h3); font-weight: var(--peso-fuerte);
+  color: var(--tinta); margin: var(--e4) 0 var(--e1);
+}
+p { margin-bottom: var(--e3); text-wrap: pretty; }
+.entradilla {
+  font-size: 1.0625rem; line-height: 1.45; font-weight: var(--peso-medio);
+  color: var(--tinta); margin-bottom: var(--e3);
+}
+strong { font-weight: var(--peso-fuerte); }
+a { color: var(--granate-hondo); }
+
+/* Al llegar por un enlace a una sección, que se note cuál es. */
+:target { scroll-margin-top: var(--e6); }
+
+/* ── Listas de documentos ────────────────────────────────────────── */
+.docs { list-style: none; margin: 0 0 var(--e3); }
+.docs li {
+  position: relative;
+  padding: var(--e2) 0 var(--e2) 30px;
+  border-bottom: 1px solid var(--borde);
+}
+.docs li:last-child { border-bottom: 0; }
+.docs li::before {
+  content: "✓";
+  position: absolute; left: 0; top: 9px;
+  width: 21px; height: 21px; border-radius: 50%;
+  background: var(--tema-suave); color: var(--tema);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--txt-chico); font-weight: var(--peso-titulo);
+}
+.docs .detalle {
+  display: block; font-size: var(--txt-chico);
+  color: var(--mute-deep); font-weight: var(--peso-cuerpo); margin-top: var(--e0);
+}
+
+ol.pasos { margin: 0 0 var(--e4); padding-left: var(--e6); }
+ol.pasos li { margin-bottom: var(--e3); padding-left: var(--e1); }
+
+/* Listas sin clase. Antes solo estaban estilados `ul.simple` y `ol.pasos`, así
+   que un <ul> pelado quedaba sin sangría ni margen inferior y el párrafo
+   siguiente se le pegaba. */
+ul, ol { margin: 0 0 var(--e4); padding-left: var(--e6); }
+li { margin-bottom: var(--e2); }
+li:last-child { margin-bottom: 0; }
+
+ul.simple { margin: 0 0 var(--e4); padding-left: var(--e6); }
+ul.simple li { margin-bottom: var(--e2); }
+
+/* ── Bloques destacados ──────────────────────────────────────────── */
+.nota, .aviso {
+  border-radius: var(--radio);
+  padding: var(--e4);
+  margin: var(--e4) 0;
+}
+.nota  { background: var(--tema-suave); }
+.aviso { background: var(--alerta-suave); }
+.nota p:last-child, .aviso p:last-child { margin-bottom: 0; }
+.nota-titulo, .aviso-titulo {
+  display: block; font-weight: var(--peso-titulo); margin-bottom: var(--e1);
+}
+.nota-titulo  { color: var(--tema-texto, var(--tema)); }
+.aviso-titulo { color: var(--alerta); }
+
+/* ── Banner ──────────────────────────────────────────────────────── */
+/* La caja: una hoja con filete y sombra corta, igual que el resto del sistema.
+   Nació pensada para un bloque informativo con ilustración SVG que nunca se
+   construyó; su único uso hoy es el espacio patrocinado de acá abajo. Si
+   alguna vez vuelve el bloque informativo, esta base ya está. */
+.banner {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sh-1);
+  overflow: hidden;
+  margin: var(--e6) 0;
+}
+
+/* ── Banner tipo campaña ─────────────────────────────────────────── */
+/* Lenguaje de las campañas de bien público: pregunta directa arriba,
+   respuesta rotunda, escena ilustrada, y la norma citada en una barra al pie.
+   Se toma la ESTRUCTURA, no la identidad: la paleta es la de la casa y en
+   ningún lado se imita un escudo ni una marca oficial, porque el sitio
+   declara en cada página que no es del Estado. */
+.campana {
+  border-radius: var(--radio);
+  overflow: hidden;
+  margin: var(--e6) 0;
+  background-color: var(--superficie);
+  border: 1px solid var(--borde);
+  box-shadow: var(--sh-1);
+}
+
+.campana-cab {
+  /* Antes era `var(--granate)` a color plano: idéntico al hex del blob #1
+     del mesh gradient de más abajo, así que ese blob quedaba invisible
+     (mismo color sobre sí mismo). Se oscurece con color-mix para que el
+     blob se note como una mancha más clara sobre un fondo más oscuro,
+     sin cambiar el matiz de marca. */
+  background: var(--granate);                                       /* fallback sin color-mix() */
+  background: color-mix(in oklab, var(--granate) 80%, black);
+  padding: var(--e5);
+  display: grid;
+  gap: var(--e4);
+  align-items: center;
+  grid-template-columns: 1fr auto;
+}
+.campana-pregunta {
+  margin: 0;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: var(--peso-titulo);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+/* El "SÍ" es el remate de la pregunta: se lee antes que el resto y es lo que
+   se recuerda. Por eso va grande y en el color de alerta, no en granate. */
+.campana-si {
+  flex: none;
+  background: #F5B85A;
+  /* `#8A5A17` (3.34:1 acá) se verificó para texto sobre BLANCO, no sobre este
+     fondo ámbar — revisión de contraste del 2026-09-02. `#3D2A0D` (7.74:1
+     sobre `#F5B85A`) es la variante verificada para este fondo en concreto. */
+  color: #3D2A0D;
+  font-size: 2rem;
+  font-weight: var(--peso-titulo);
+  line-height: 1;
+  padding: var(--e3) var(--e5);
+  border-radius: var(--radio-completo);
+  letter-spacing: -0.02em;
+}
+
+.campana-escena {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* El fondo del propio dibujo, para que no se vea un salto de color mientras
+     la imagen todavía no cargó. */
+  background: #FEDCE0;
+}
+
+.campana-cuerpo { padding: var(--e5); }
+.campana-cuerpo p { margin-bottom: var(--e3); }
+.campana-cuerpo p:last-child { margin-bottom: 0; }
+.campana-clave {
+  font-size: 1.0625rem;
+  font-weight: var(--peso-medio);
+  color: var(--tinta);
+  line-height: 1.4;
+}
+
+/* Barra de norma: el equivalente al pie de fuente de las campañas oficiales.
+   Acá cita la norma, nunca una institución, para no sugerir respaldo. */
+.campana-norma {
+  background: var(--carton);
+  color: #A8C3DE;
+  padding: var(--e4) var(--e5);
+  font-size: var(--txt-chico);
+  line-height: 1.5;
+}
+.campana-norma strong { color: #fff; font-weight: var(--peso-medio); }
+
+@media (min-width: 34rem) {
+  .campana-pregunta { font-size: 1.5rem; }
+  .campana-si { font-size: 2.5rem; }
+}
+
+/* ── Datos sueltos: plazo, costo, área ───────────────────────────── */
+.datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--e3);
+  margin: var(--e4) 0 var(--e2); padding: 0; list-style: none;
+}
+.datos li {
+  background-color: var(--superficie);
+  border: 1px solid var(--borde); box-shadow: var(--sh-1);
+  border-radius: var(--radio); padding: var(--e3) var(--e4);
+}
+/* Campo de formulario sellado: rótulo en monoespaciada arriba del valor. Es
+   el mismo tratamiento que el plazo en las fichas de la portada. */
+.datos .rotulo {
+  display: block; font-family: var(--mono); font-size: var(--txt-chico);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--mute-deep); font-weight: var(--peso-medio); margin-bottom: var(--e1);
+}
+.datos .valor {
+  display: block; font-weight: var(--peso-titulo);
+  color: var(--tinta); line-height: 1.35;
+}
+
+/* ── Índice de trámites (portada de la sección) ──────────────────── */
+.indice { list-style: none; margin: var(--e2) 0 0; }
+.indice li { border-top: 1px solid var(--borde); }
+.indice li:last-child { border-bottom: 1px solid var(--borde); }
+.indice a {
+  display: flex; gap: var(--e3); align-items: flex-start;
+  padding: var(--e4) var(--e2);
+  margin: 0 calc(var(--e2) * -1);
+  text-decoration: none; color: inherit;
+  border-radius: var(--radio-chico);
+  transition: background var(--dur) var(--salida);
+}
+.indice a:hover { background: var(--superficie); }
+.indice a:active { background: var(--tema-suave); }
+/* Ícono de trazo, no emoji: cada Android dibujaba los emojis a su manera y no
+   heredaban el color del trámite. Mismo trazo de 1.7 que el Ico de la app. */
+.indice .icono {
+  flex: 0 0 auto; display: flex; color: var(--granate-hondo);
+  /* Alinea el trazo con la primera línea del título, no con el bloque. */
+  padding-top: 2px;
+}
+.indice .icono svg { display: block; }
+.indice .txt { flex: 1; }
+.indice .titulo {
+  display: block; font-weight: var(--peso-titulo); font-size: var(--txt-h3);
+  color: var(--granate-hondo); margin-bottom: var(--e0);
+}
+.indice a:hover .titulo { text-decoration: underline; }
+.indice .bajada {
+  display: block; color: var(--mute-deep);
+  font-size: var(--txt-chico); font-weight: var(--peso-cuerpo); line-height: 1.5;
+}
+/* Punta de flecha: dice "esto lleva a otra página" sin agregar texto.
+   Va colgada del <a>, que ya es flex, y no de .txt: como ::after de .txt era
+   un float dentro del bloque de texto, caía debajo de la bajada en vez de
+   quedar a la altura del título, y se leía como un signo suelto. */
+.indice a::after {
+  content: "›";
+  flex: 0 0 auto; align-self: flex-start;
+  color: var(--mute-deep); font-size: 1.5rem; line-height: 1.15;
+}
+
+.ayuda-secciones {
+  font-size: var(--txt-chico); font-weight: var(--peso-medio);
+  color: var(--mute-deep); margin: var(--e6) 0 var(--e2);
+}
+
+/* ── Secciones plegables ─────────────────────────────────────────── */
+/* <details> nativo: funciona sin JS, el contenido sigue en el HTML (los
+   buscadores lo leen igual) y el teclado lo abre solo. */
+.seccion { border-bottom: 1px solid var(--borde); }
+.seccion:first-of-type { border-top: 1px solid var(--borde); }
+
+.seccion > summary {
+  display: flex; align-items: center; gap: var(--e3);
+  padding: var(--e3) var(--e2);
+  margin: 0 calc(var(--e2) * -1);
+  border-radius: var(--radio-chico);
+  min-height: var(--toque);
+  cursor: pointer;
+  font-size: var(--txt-h2); line-height: 1.25; font-weight: var(--peso-fuerte);
+  color: var(--tema-texto, var(--tema)); letter-spacing: -0.025em;
+  list-style: none;
+  text-wrap: balance;
+  transition: background var(--dur) var(--salida);
+}
+.seccion > summary::-webkit-details-marker { display: none; }
+.seccion > summary:hover { background: var(--superficie); }
+.seccion > summary:focus-visible { outline-offset: -3px; }
+
+/* La sección abierta se tiñe: en una lista de seis, saber cuál está
+   desplegada no debería depender de mirar la punta de la flecha. */
+.seccion[open] > summary { background: var(--tema-suave); }
+
+.seccion > summary::after {
+  content: "";
+  flex: 0 0 auto; order: -1;
+  width: 11px; height: 11px;
+  margin-left: var(--e1);
+  border-right: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 200ms var(--salida);
+}
+.seccion[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+
+.seccion-cuerpo { padding: var(--e2) var(--e2) var(--e4); }
+.seccion-cuerpo > :first-child, .seccion-cuerpo h3:first-child { margin-top: 0; }
+/* Dentro de una sección plegable los h3 ya no compiten con el summary */
+.seccion-cuerpo h3 { color: var(--tinta); }
+
+/* Transición de apertura del acordeón: sin JS, sin cambiar el marcado.
+   `@starting-style` es soporte nativo del navegador; donde falte, el
+   acordeón sigue funcionando igual, solo sin la animación de entrada. */
+@media (prefers-reduced-motion: no-preference) {
+  .seccion-cuerpo {
+    transition: opacity 220ms ease-out, transform 220ms ease-out;
+  }
+  @starting-style {
+    .seccion[open] > .seccion-cuerpo {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+}
+
+/* ── Preguntas frecuentes ────────────────────────────────────────── */
+.faq h3 { margin-top: var(--e5); }
+.faq h3:first-child { margin-top: 0; }
+
+/* ── Botón ───────────────────────────────────────────────────────── */
+.boton {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--tema); color: #fff;
+  font-weight: var(--peso-fuerte); font-size: var(--txt);
+  text-decoration: none;
+  padding: var(--e3) var(--e6);
+  border-radius: var(--radio);
+  min-height: var(--toque);
+  transition: background var(--dur) var(--salida), transform var(--dur) var(--salida);
+}
+.boton:hover { background: color-mix(in oklab, var(--tema) 86%, #000); }
+.boton:active { transform: scale(0.98); }
+
+/* Botón de cierre de la guía, antes del aviso legal. */
+.cierre { margin: var(--e7) 0 0; }
+
+/* ── Aviso de plataforma independiente ───────────────────────────── */
+/* Va arriba, antes del título: quien llega desde un buscador tiene que saber
+   de entrada que esto no es una web del Estado. Compacto a propósito, para
+   que la advertencia no empuje el contenido fuera de la primera pantalla. */
+.independencia {
+  background: var(--aviso-bg); border: 1px solid var(--aviso-borde);
+  border-radius: var(--radio-chico); padding: var(--e2);
+  margin: 0 0 var(--e3);
+  font-size: 0.75rem; color: var(--mute-deep);
+  font-weight: var(--peso-medio); line-height: 1.25;
+}
+.independencia strong { color: var(--granate-hondo); }
+
+/* ── Firma de autoría ────────────────────────────────────────────── */
+/* Quién escribe y sobre qué norma se apoya. En un sitio de salud es la señal
+   que más pesa: sin autor ni fecha de revisión, el contenido se lee como
+   anónimo y Google lo trata como tal. Va al final, no al principio: quien
+   entra busca el trámite, no la ficha del autor. */
+.firma {
+  margin-top: var(--e7);
+  padding-top: var(--e5);
+  border-top: 1px solid var(--borde);
+  font-size: var(--txt-chico);
+  color: var(--mute-deep);
+  line-height: 1.6;
+}
+.firma p { margin: 0 0 var(--e2); }
+.firma p:last-child { margin-bottom: 0; }
+.firma strong { color: var(--tinta); font-weight: var(--peso-medio); }
+.firma time { font-variant-numeric: tabular-nums; }
+
+/* ── Pie ─────────────────────────────────────────────────────────── */
+/* Banda oscura a ancho completo, igual que la landing. Vive fuera de <main>
+   (si no, contenido.js lo mete dentro del envoltorio del índice y en pantalla
+   ancha quedaría encajonado en una columna). */
+/* Cartón prensado, el mismo del pie y del marco normativo de la portada: color
+   + un canalado muy tenue que lo separa de "un div oscuro". */
+.pie {
+  background-color: var(--carton);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.022) 0 2px, transparent 2px 7px);
+  color: #A8C3DE;
+  padding: var(--e8) 0;
+  font-size: var(--txt-chico);
+}
+/* El relleno lateral va acá y no en .pie: así el ancho máximo lo incluye,
+   igual que en <main>, y el primer enlace del pie cae en la misma vertical
+   que el cuerpo en vez de 20px a la izquierda. */
+.pie-int { max-width: var(--ancho); margin: 0 auto; padding: 0 var(--e5); }
+/* En pantalla ancha el cuerpo crece para dejar sitio al índice; el pie
+   acompaña ese ancho para que su primer enlace alinee con el índice. */
+@media (min-width: 64rem) {
+  body.con-indice .pie-int { max-width: calc(var(--ancho) + var(--ancho-indice) + 3rem); }
+}
+.pie nav {
+  display: flex; flex-wrap: wrap;
+  gap: 0 var(--e6); margin-bottom: var(--e2);
+}
+.pie nav a {
+  display: inline-flex; align-items: center;
+  min-height: var(--toque);
+  font-size: 0.9375rem; font-weight: var(--peso-cuerpo);
+  color: #F6F9FC; text-decoration: none;
+}
+.pie nav a:hover { color: #fff; text-decoration: underline; }
+.pie nav a:focus-visible { outline-color: #fff; }
+.pie p { margin: 0; line-height: 1.6; }
+
+/* ── Llamada al asistente guiado ─────────────────────────────────── */
+/* Es la acción que queremos que la gente tome, así que es el único bloque
+   con el color del trámite lleno: en una página de texto corrido, la mancha
+   de color se ve antes que cualquier título. */
+.asistente {
+  /* Mismo bug que tenía `.campana-cab`: `--tema` por defecto (páginas sin
+     `data-tramite`: publicidad, contacto, tramites.html) es `#5B4FE9`,
+     idéntico al blob #1 del mesh gradient de más abajo — el blob quedaba
+     invisible (mismo color sobre sí mismo). Mismo arreglo, mismo porcentaje. */
+  background: var(--tema);                                          /* fallback sin color-mix() */
+  background: color-mix(in oklab, var(--tema) 80%, black);
+  color: #fff;
+  border-radius: var(--radio);
+  padding: var(--e5);
+  margin: var(--e6) 0;
+}
+.asistente h2 {
+  margin: 0 0 var(--e2);
+  color: #fff; font-size: var(--txt-h2);
+}
+.asistente p { color: #fff; }
+.asistente p:last-of-type { margin-bottom: 0; }
+.asistente p:has(.boton) { margin: var(--e4) 0 0; }
+
+/* Botón invertido: blanco sobre el color del trámite. */
+.asistente .boton {
+  background: #fff;
+  color: var(--tema-texto, var(--tema));
+  font-weight: var(--peso-titulo);
+}
+.asistente .boton:hover { background: #F6F9FC; }
+.asistente a:focus-visible { outline-color: #fff; }
+/* Texto secundario dentro del bloque: blanco atenuado, nunca gris. */
+.asistente .apunte {
+  font-size: var(--txt-chico);
+  color: rgba(255, 255, 255, 0.88);
+  margin: var(--e4) 0 0;
+}
+
+/* ── Impresión: la checklist se lleva al hospital en papel ───────── */
+@media print {
+  .cabecera, .pie nav, .saltar, .migas, .boton, .asistente,
+  .ayuda-secciones, .indice-lateral, .intro-retrato { display: none; }
+  .seccion, .seccion:first-of-type { border: 0; }
+  .seccion > summary {
+    padding: 0; margin: 0; min-height: 0; color: #000; background: none;
+  }
+  .seccion > summary::after { display: none; }
+  .seccion-cuerpo { padding: 0; }
+  body { background: #fff; font-size: 12pt; }
+  main, main.con-indice { max-width: none; padding: 0; display: block; }
+  h1, h2 { color: #000; }
+  .nota, .aviso, .datos li { border: 1px solid #999; background: #fff; }
+  .docs li::before { background: #fff; border: 1px solid #333; color: #000; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: 9pt; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .boton:active { transform: none; }
+}
+
+/* ── Móvil angosto ───────────────────────────────────────────────── */
+@media (max-width: 30rem) {
+  :root { --txt-h1: 1.375rem; --txt-h2: 1.125rem; }
+  main { padding: var(--e4) var(--e4) var(--e7); }
+  .entradilla { font-size: var(--txt); }
+  .asistente { padding: var(--e4); }
+  .intro { gap: var(--e3); }
+  /* El botón ocupa el ancho: más fácil de acertar con el pulgar. */
+  .boton { display: flex; width: 100%; }
+}
+
+/* Pantallas muy angostas (360px y menos): que nada se desborde. */
+@media (max-width: 22.5rem) {
+  .intro-retrato { width: 64px; height: 64px; }
+  .datos { grid-template-columns: 1fr; }
+  .cabecera-nav { padding: var(--e3) var(--e1); }
+}
+
+/* Fragmentos técnicos (atributos HTML, nombres de parámetros). Solo aparecen
+   en publicidad.html, donde hay que citar `rel="sponsored"` con exactitud. */
+/* Sin fondo ni caja a propósito: un recuadro con relleno deja un hueco visible
+   antes de la coma o el punto que sigue, y estos fragmentos aparecen siempre
+   en medio de una frase. */
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+  color: var(--tinta);
+  overflow-wrap: anywhere;
+}
+
+
+
+/* ── Espacio patrocinado dentro de una guía ──────────────────────────────
+   Es un .banner, pero enlazado y rotulado. Lo inserta contenido.js; sin JS no
+   aparece, y la guía se lee igual.
+
+   La proporción va FIJA (16:10, el mismo recorte que en el asistente): la
+   imagen llega después que el texto y, sin alto reservado, empujaría hacia
+   abajo lo que la persona está leyendo. */
+.banner--patrocinado {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+.banner--patrocinado:hover { border-color: var(--regla); }
+.banner--patrocinado:focus-visible { outline: 3px solid var(--tema); outline-offset: 3px; }
+
+/* El rótulo va ENCIMA de la imagen y no debajo: tiene que verse antes que la
+   pieza, no después de haberla leído como si fuera contenido de la guía. */
+.banner-rotulo {
+  position: absolute; top: var(--e2); left: var(--e2); z-index: 2;
+  background: var(--carton); color: #F6F9FC;
+  font-family: var(--mono); font-size: var(--txt-chico); font-weight: var(--peso-medio);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: var(--radio);
+}
+.banner-arte-img {
+  display: block; width: 100%; height: auto;
+  aspect-ratio: 16 / 10; object-fit: cover;
+  background: var(--bg);
+  border-bottom: 1px solid var(--borde);
+}
+.banner--patrocinado .banner-texto { display: block; padding: var(--e4) var(--e5); }
+.banner-titulo {
+  display: block; font-weight: var(--peso-titulo); color: var(--tinta);
+  line-height: 1.3; margin-bottom: 2px;
+}
+.banner-linea { display: block; color: var(--mute-deep); line-height: 1.45; }
+
+/* ── Mesh gradient animado ─────────────────────────────────────────
+   Fondo decorativo para el héroe de la portada y las cajas de CTA
+   (.asistente, .campana-cab). Nunca detrás de texto de cuerpo: solo
+   detrás de superficies con su propio color de texto ya resuelto
+   (blanco sobre el bloque), para no arriesgar contraste. Los blobs son
+   pseudo-elementos de `.asistente`/`.campana-cab` directamente — ninguna
+   clase nueva que haya que acordarse de agregar en el HTML. */
+.asistente, .campana-cab {
+  position: relative;
+  overflow: hidden;
+}
+.asistente::before, .asistente::after,
+.campana-cab::before, .campana-cab::after {
+  content: "";
+  position: absolute;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  z-index: 0;
+  pointer-events: none;
+}
+.asistente::before, .campana-cab::before {
+  background: #5B4FE9;
+  top: -20%;
+  left: -10%;
+  animation: meshFlota1 26s ease-in-out infinite alternate;
+}
+.asistente::after, .campana-cab::after {
+  background: #0B6E77;
+  bottom: -25%;
+  right: -15%;
+  animation: meshFlota2 30s ease-in-out infinite alternate;
+}
+@keyframes meshFlota1 {
+  to { transform: translate(8%, 10%) scale(1.15); }
+}
+@keyframes meshFlota2 {
+  to { transform: translate(-10%, -6%) scale(1.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .asistente::before, .asistente::after,
+  .campana-cab::before, .campana-cab::after { animation: none; }
+}
+.asistente > *, .campana-cab > * { position: relative; z-index: 1; }

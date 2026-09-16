@@ -19,11 +19,18 @@ Abrir `http://localhost:5173/` (la app es solo el CRM; no hay ruta `/crm-costos`
 - JSON servido: `public/data/tarifario-*.json`
 - Regenerar: `npm run importar-tarifario` (Python + `pandas` + `odfpy`)
 
-## Despliegue en Vercel
+## Despliegue en Vercel (proyecto nuevo, no digitalasistent.com)
 
-1. Crear repo en GitHub (vacío) `crm-tarifario-essalud`.
-2. Push de este proyecto a `main`.
-3. En [vercel.com/new](https://vercel.com/new) → Importar el repo → **nuevo proyecto** (dominio `.vercel.app` propio).
+1. Publica este código en un repo GitHub **nuevo** (`crm-tarifario-essalud`). Desde la rama `crm-tarifario-essalud-root` del repo digitalasistent:
+
+```bash
+git clone -b crm-tarifario-essalud-root https://github.com/Patrocor/digitalasistent.git crm-tarifario-essalud
+cd crm-tarifario-essalud
+git remote set-url origin https://github.com/Patrocor/crm-tarifario-essalud.git
+git push -u origin HEAD:main
+```
+
+2. [vercel.com/new](https://vercel.com/new) → importa **solo** ese repo → crea un **proyecto nuevo** (otra URL `.vercel.app`).
 
 ## Scripts
 

@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
+import { consultarDniUpstream } from "./lib/consultaDniUpstream.js";
 
 async function consultaDniDev(req, res, token) {
   const url = new URL(req.url, "http://localhost");
@@ -24,44 +25,15 @@ async function consultaDniDev(req, res, token) {
     return;
   }
 
-  try {
-    const upstream = await fetch(
-      `https://api.apis.net.pe/v2/consulta-dni?numero=${numero}`,
-      {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      },
-    );
-    const body = await upstream.json().catch(() => ({}));
-    res.statusCode = upstream.ok ? 200 : upstream.status === 404 ? 404 : 502;
-    res.setHeader("Content-Type", "application/json");
-    if (!upstream.ok) {
-      res.end(
-        JSON.stringify({
-          error: body.message || body.error || "Consulta fallida",
-        }),
-      );
-      return;
-    }
-    const nombres = body.nombres ?? body.nombre ?? "";
-    const apellidoPaterno = body.apellidoPaterno ?? "";
-    const apellidoMaterno = body.apellidoMaterno ?? "";
-    res.end(
-      JSON.stringify({
-        dni: numero,
-        nombres: String(nombres).trim(),
-        apellidoPaterno: String(apellidoPaterno).trim(),
-        apellidoMaterno: String(apellidoMaterno).trim(),
-        nombreCompleto: [nombres, apellidoPaterno, apellidoMaterno]
-          .map((s) => String(s || "").trim())
-          .filter(Boolean)
-          .join(" "),
-      }),
-    );
-  } catch {
-    res.statusCode = 502;
-    res.setHeader("Content-Type", "application/json");
-    res.end(JSON.stringify({ error: "No se pudo contactar el servicio de DNI" }));
+  const result = await consultarDniUpstream(numero, token);
+  res.setHeader("Content-Type", "application/json");
+  if (!result.ok) {
+    res.statusCode = result.status === 404 ? 404 : 502;
+    res.end(JSON.stringify({ error: result.error }));
+    return;
   }
+  res.statusCode = 200;
+  res.end(JSON.stringify(result.data));
 }
 
 function dniApiDevPlugin(env) {

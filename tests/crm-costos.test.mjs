@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { dniEsValido, normalizarDni } from "../src/consultaDni.js";
 import {
   agregarAlCarrito,
   actualizarCantidadCarrito,
   buscarEnCatalogo,
   formatearSoles,
   lineaDesdeTarifario,
+  textoLiquidacion,
   totalesCarrito,
 } from "../src/crmCostos.js";
 
@@ -53,5 +55,22 @@ assert.equal(hits.length, 1);
 assert.equal(hits[0].codigo, "0305002");
 
 assert.ok(formatearSoles(31.86).includes("31.86"));
+
+assert.equal(normalizarDni("12.345.678-9"), "12345678");
+assert.equal(dniEsValido("12345678"), true);
+assert.equal(dniEsValido("1234567"), false);
+
+const texto = textoLiquidacion({
+  dni: "12345678",
+  paciente: "Juan Pérez",
+  facturarA: "Juan Pérez",
+  pagare: "99",
+  referencia: "LQ-TEST",
+  carrito: [],
+  totales: { subtotal: 0, igv: 0, total: 0 },
+  meta: null,
+});
+assert.ok(texto.includes("DNI: 12345678"));
+assert.ok(texto.includes("Pagaré Nº: 99"));
 
 console.log("crm-costos.test.mjs OK");

@@ -2,7 +2,10 @@
  * CRM de costos: selección de atenciones del tarifario Essalud y liquidación para pago.
  * Ruta: /crm-costos (personal de facturación / caja).
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import AutocompleteCampo from "./AutocompleteCampo";
+import BusquedaCatalogo from "./BusquedaCatalogo";
+import { consultarDniPorApi, dniEsValido, normalizarDni } from "./consultaDni";
 import {
   agregarAlCarrito,
   actualizarCantidadCarrito,
@@ -13,6 +16,10 @@ import {
   textoLiquidacion,
   totalesCarrito,
 } from "./crmCostos";
+import {
+  buscarPacientesRecientes,
+  guardarPacienteReciente,
+} from "./pacientesRecientes";
 
 const URL_PREST = "/data/tarifario-prestaciones.json";
 const URL_FARM = "/data/tarifario-farmacia.json";
@@ -96,9 +103,13 @@ export default function PanelCrmCostos() {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
 
+  const [dni, setDni] = useState("");
   const [paciente, setPaciente] = useState("");
   const [facturarA, setFacturarA] = useState("");
   const [pagare, setPagare] = useState("");
+  const [dniCargando, setDniCargando] = useState(false);
+  const [dniError, setDniError] = useState("");
+  const ultimoDniConsultado = useRef("");
 
   const [carrito, setCarrito] = useState([]);
   const [paso, setPaso] = useState("atencion");
@@ -163,7 +174,66 @@ export default function PanelCrmCostos() {
     return buscarEnCatalogo(base, busqueda, 50);
   }, [catalogoActivo, busqueda, categoriaFiltro, tab]);
 
+  const sugerenciasPaciente = useMemo(
+    () =>
+      buscarPacientesRecientes(paciente || dni, 10).map((p, i) => ({
+        ...p,
+        id: p.dni || `p-${i}-${p.paciente}`,
+      })),
+    [paciente, dni],
+  );
+
+  const sugerenciasFacturar = useMemo(
+    () =>
+      buscarPacientesRecientes(facturarA, 8).map((p, i) => ({
+        ...p,
+        id: `f-${p.dni || i}-${p.facturarA}`,
+      })),
+    [facturarA],
+  );
+
   const totales = useMemo(() => totalesCarrito(carrito), [carrito]);
+
+  const consultarDni = useCallback(async (valorDni) => {
+    const numero = normalizarDni(valorDni);
+    if (!dniEsValido(numero)) return;
+    if (ultimoDniConsultado.current === numero) return;
+    ultimoDniConsultado.current = numero;
+    setDniCargando(true);
+    setDniError("");
+    try {
+      const data = await consultarDniPorApi(numero);
+      if (data.nombreCompleto) {
+        setPaciente(data.nombreCompleto);
+        setFacturarA((prev) => (prev.trim() ? prev : data.nombreCompleto));
+      }
+    } catch (e) {
+      ultimoDniConsultado.current = "";
+      setDniError(e.message || "No se pudo consultar el DNI");
+    } finally {
+      setDniCargando(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!dniEsValido(dni)) {
+      ultimoDniConsultado.current = "";
+      return;
+    }
+    const t = setTimeout(() => consultarDni(dni), 400);
+    return () => clearTimeout(t);
+  }, [dni, consultarDni]);
+
+  const aplicarPacienteReciente = (reg) => {
+    if (reg.dni) setDni(reg.dni);
+    if (reg.paciente) setPaciente(reg.paciente);
+    if (reg.facturarA) setFacturarA(reg.facturarA);
+    setDniError("");
+  };
+
+  const persistirAtencionActual = () => {
+    guardarPacienteReciente({ dni, paciente, facturarA });
+  };
 
   const onAgregar = (item) => {
     setCarrito((c) => agregarAlCarrito(c, item, 1));
@@ -171,6 +241,7 @@ export default function PanelCrmCostos() {
 
   const irAPago = () => {
     if (!carrito.length) return;
+    persistirAtencionActual();
     setReferencia(generarReferenciaLiquidacion());
     setPagoConfirmado(false);
     setPaso("pago");
@@ -181,12 +252,14 @@ export default function PanelCrmCostos() {
       textoLiquidacion({
         paciente,
         facturarA,
+        dni,
+        pagare,
         referencia,
         carrito,
         totales,
         meta,
       }),
-    [paciente, facturarA, referencia, carrito, totales, meta],
+    [paciente, facturarA, dni, pagare, referencia, carrito, totales, meta],
   );
 
   const copiarLiquidacion = async () => {
@@ -250,8 +323,59 @@ export default function PanelCrmCostos() {
             >
               <h2 style={{ margin: "0 0 12px", fontSize: 16 }}>Datos de la atención</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-                <Campo label="Paciente" value={paciente} onChange={setPaciente} placeholder="Nombre completo" />
-                <Campo label="Facturar a" value={facturarA} onChange={setFacturarA} placeholder="Titular o empresa" />
+                <AutocompleteCampo
+                  label="DNI del paciente"
+                  value={dni}
+                  onChange={(v) => {
+                    setDni(normalizarDni(v));
+                    setDniError("");
+                  }}
+                  placeholder="8 dígitos"
+                  inputMode="numeric"
+                  maxLength={8}
+                  disabled={dniCargando}
+                  hint={dniCargando ? "Consultando RENIEC…" : "Se autocompleta nombre al ingresar el DNI"}
+                  onBlurExtra={() => {
+                    if (dniEsValido(dni)) consultarDni(dni);
+                  }}
+                  sugerencias={sugerenciasPaciente.filter((p) => p.dni)}
+                  onSeleccionarSugerencia={aplicarPacienteReciente}
+                  renderSugerencia={(p) => (
+                    <>
+                      <strong>{p.dni}</strong>
+                      {" — "}
+                      {p.paciente || "Sin nombre"}
+                    </>
+                  )}
+                />
+                {dniError && (
+                  <p style={{ gridColumn: "1 / -1", margin: 0, fontSize: 12, color: "#A32B3E" }}>{dniError}</p>
+                )}
+                <AutocompleteCampo
+                  label="Paciente"
+                  value={paciente}
+                  onChange={setPaciente}
+                  placeholder="Nombre completo"
+                  sugerencias={sugerenciasPaciente}
+                  onSeleccionarSugerencia={aplicarPacienteReciente}
+                  renderSugerencia={(p) => (
+                    <>
+                      {p.paciente}
+                      {p.dni ? (
+                        <span style={{ color: "#5B6B7D" }}> · DNI {p.dni}</span>
+                      ) : null}
+                    </>
+                  )}
+                />
+                <AutocompleteCampo
+                  label="Facturar a"
+                  value={facturarA}
+                  onChange={setFacturarA}
+                  placeholder="Titular o empresa"
+                  sugerencias={sugerenciasFacturar}
+                  onSeleccionarSugerencia={(p) => setFacturarA(p.facturarA || p.paciente)}
+                  renderSugerencia={(p) => p.facturarA || p.paciente}
+                />
                 <Campo label="Pagaré Nº (opcional)" value={pagare} onChange={setPagare} placeholder="Ej. 497137" />
               </div>
             </section>
@@ -302,17 +426,13 @@ export default function PanelCrmCostos() {
                   ))}
                 </div>
 
-                <input
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder={tab === "farmacia" ? "Buscar medicamento o código…" : "Buscar procedimiento, consulta o código…"}
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    border: "1px solid #A8C3DE",
-                    marginBottom: 10,
-                  }}
+                <BusquedaCatalogo
+                  tab={tab}
+                  busqueda={busqueda}
+                  onBusquedaChange={setBusqueda}
+                  resultados={resultados}
+                  onAgregar={onAgregar}
+                  catalogoListo={catalogoActivo.length > 0}
                 />
 
                 {tab === "prestacion" && (
@@ -510,6 +630,9 @@ export default function PanelCrmCostos() {
             <p style={{ fontSize: 12, color: "#5B6B7D", margin: "0 0 4px" }}>Nº liquidación</p>
             <p style={{ fontSize: 20, fontWeight: 800, margin: "0 0 16px" }}>{referencia}</p>
 
+            {dni && (
+              <p style={{ margin: "0 0 4px" }}><strong>DNI:</strong> {dni}</p>
+            )}
             {facturarA && (
               <p style={{ margin: "0 0 4px" }}><strong>Facturar a:</strong> {facturarA}</p>
             )}
@@ -582,9 +705,12 @@ export default function PanelCrmCostos() {
                 setPaso("atencion");
                 setReferencia("");
                 setPagoConfirmado(false);
+                setDni("");
                 setPaciente("");
                 setFacturarA("");
                 setPagare("");
+                setDniError("");
+                ultimoDniConsultado.current = "";
               }}
             >
               Nueva atención

@@ -147,14 +147,25 @@ export function generarReferenciaLiquidacion(fecha = new Date()) {
   return `LQ-${y}${m}${d}-${t}`;
 }
 
-export function textoLiquidacion({ paciente, facturarA, referencia, carrito, totales, meta }) {
+export function textoLiquidacion({
+  paciente,
+  facturarA,
+  dni,
+  pagare,
+  referencia,
+  carrito,
+  totales,
+  meta,
+}) {
   const lineas = [];
   lineas.push("PRE-LIQUIDACIÓN DE PRESTACIONES ASISTENCIALES");
   if (meta?.resolucion) lineas.push(meta.resolucion);
   lineas.push("");
   if (referencia) lineas.push(`Nº liquidación: ${referencia}`);
   if (facturarA) lineas.push(`Facturar a: ${facturarA}`);
+  if (dni) lineas.push(`DNI: ${dni}`);
   if (paciente) lineas.push(`Paciente: ${paciente}`);
+  if (pagare) lineas.push(`Pagaré Nº: ${pagare}`);
   lineas.push("");
   lineas.push("DETALLE\tCANT\tP.U.\tSUBTOTAL");
   for (const sec of agruparLineasPorSeccion(carrito)) {

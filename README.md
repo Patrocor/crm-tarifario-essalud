@@ -13,6 +13,14 @@ npm run dev
 
 Abrir `http://localhost:5173/` (la app es solo el CRM; no hay ruta `/crm-costos`).
 
+### Consulta DNI (autocompletar paciente)
+
+1. Copia `.env.example` a `.env.local` y define `APIS_NET_PE_TOKEN` ([apis.net.pe](https://apis.net.pe)).
+2. En Vercel, agrega la misma variable en **Settings → Environment Variables**.
+3. Al ingresar 8 dígitos en **DNI**, se consulta `/api/consulta-dni` y se rellenan **Paciente** y **Facturar a**.
+
+Los pacientes usados se guardan en el navegador para autocompletar en atenciones siguientes.
+
 ## Tarifario
 
 - Fuente: `data/TARIFARIO.ods`
